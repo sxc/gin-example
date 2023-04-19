@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -16,7 +17,7 @@ type Recipe struct {
 	Tags         []string  `json:"tags"`
 	Ingredients  []string  `json:"ingredients"`
 	Instructions []string  `json:"instructions"`
-	PublisedAt   time.Time `json:"publishedAt"`
+	PublishedAt  time.Time `json:"publishedAt"`
 }
 
 var recipes []Recipe
@@ -34,6 +35,7 @@ func main() {
 	router.GET("/recipes", ListRecipesHandler)
 	router.PUT("/recipes/:id", UpdateRecipeHandler)
 	router.DELETE("/recipes/:id", DeleteRecipeHandler)
+	router.GET("/recipes/search", SearchRecipesHandler)
 	router.Run()
 
 }
@@ -45,7 +47,7 @@ func NewRecipeHandler(c *gin.Context) {
 		return
 	}
 	recipe.ID = xid.New().String()
-	recipe.PublisedAt = time.Now()
+	recipe.PublishedAt = time.Now()
 	recipes = append(recipes, recipe)
 	c.JSON(200, recipe)
 }
@@ -61,7 +63,6 @@ func UpdateRecipeHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
 	index := -1
 	for i := 0; i < len(recipes); i++ {
 		if recipes[i].ID == id {
@@ -69,14 +70,11 @@ func UpdateRecipeHandler(c *gin.Context) {
 			break
 		}
 	}
-
 	if index == -1 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Recipe not found"})
 		return
 	}
-
 	recipes[index] = recipe
-
 	c.JSON(http.StatusOK, recipe)
 }
 
@@ -89,13 +87,29 @@ func DeleteRecipeHandler(c *gin.Context) {
 			break
 		}
 	}
-
 	if index == -1 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Recipe not found"})
 		return
 	}
-
 	recipes = append(recipes[:index], recipes[index+1:]...)
-
 	c.JSON(http.StatusOK, gin.H{"message": "Recipe deleted"})
+}
+
+func SearchRecipesHandler(c *gin.Context) {
+	tag := c.Query("tag")
+	listOfRecipes := make([]Recipe, 0)
+
+	for i := 0; i < len(recipes); i++ {
+		found := false
+		for _, t := range recipes[i].Tags {
+			if strings.EqualFold(t, tag) {
+				found = true
+			}
+		}
+		if found {
+			listOfRecipes = append(listOfRecipes, recipes[i])
+		}
+	}
+
+	c.JSON(http.StatusOK, listOfRecipes)
 }
