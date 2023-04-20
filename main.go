@@ -33,6 +33,7 @@ func main() {
 	router := gin.Default()
 	router.POST("/recipes", NewRecipeHandler)
 	router.GET("/recipes", ListRecipesHandler)
+	router.GET("/recipes/:id", ShowRecipeHandler)
 	router.PUT("/recipes/:id", UpdateRecipeHandler)
 	router.DELETE("/recipes/:id", DeleteRecipeHandler)
 	router.GET("/recipes/search", SearchRecipesHandler)
@@ -112,4 +113,15 @@ func SearchRecipesHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, listOfRecipes)
+}
+
+func ShowRecipeHandler(c *gin.Context) {
+	id := c.Param("id")
+	for _, recipe := range recipes {
+		if recipe.ID == id {
+			c.JSON(200, recipe)
+			return
+		}
+	}
+	c.JSON(404, gin.H{"error": "Recipe not found"})
 }
