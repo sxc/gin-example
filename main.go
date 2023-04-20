@@ -75,7 +75,10 @@ func UpdateRecipeHandler(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Recipe not found"})
 		return
 	}
+	recipesID := recipes[index].ID
+
 	recipes[index] = recipe
+	recipes[index].ID = recipesID
 	c.JSON(http.StatusOK, recipe)
 }
 
